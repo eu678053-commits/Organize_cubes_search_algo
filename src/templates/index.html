@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>חיפוש מידע — תכנון בעולם הקוביות</title>
+    <style>
+        /* ===== RESET & BASE ===== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            background: #f0f4f8;
+            color: #1a1a2e;
+            direction: rtl;
+            min-height: 100vh;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 18px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        header h1 { font-size: 1.5em; font-weight: 600; }
+        header .subtitle { font-size: 0.9em; opacity: 0.8; }
+
+        /* ===== TABS ===== */
+        .tabs {
+            display: flex;
+            background: #16213e;
+            padding: 0 20px;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,0.6);
+            padding: 12px 24px;
+            font-size: 0.95em;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .tab-btn:hover { color: white; }
+        .tab-btn.active {
+            color: white;
+            border-bottom-color: #4cc9f0;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ===== LAYOUT ===== */
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .card-header {
+            background: #e8edf3;
+            padding: 12px 18px;
+            font-weight: 600;
+            font-size: 1em;
+            border-bottom: 1px solid #dde3eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-body { padding: 18px; }
+
+        /* ===== STATE EDITOR ===== */
+        .state-editor {
+            min-height: 200px;
+        }
+        .stacks-container {
+            display: flex;
+            flex-direction: row-reverse;
+            gap: 16px;
+            align-items: flex-end;
+            min-height: 180px;
+            padding: 12px;
+            background: #f8fafb;
+            border: 2px dashed #cdd5de;
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+        .stack-column {
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            min-width: 64px;
+            position: relative;
+        }
+        .stack-base {
+            width: 70px;
+            height: 4px;
+            background: #6c757d;
+            border-radius: 2px;
+            margin-top: 4px;
+        }
+
+        /* ===== BLOCKS ===== */
+        .block {
+            width: 64px;
+            height: 38px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1em;
+            cursor: grab;
+            margin-bottom: 2px;
+            border: 2px solid rgba(0,0,0,0.15);
+            user-select: none;
+            transition: transform 0.15s, box-shadow 0.15s;
+            position: relative;
+            z-index: 1;
+        }
+        .block:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .block.dragging {
+            opacity: 0.5;
+            transform: scale(0.9);
+        }
+        .block.top-block::after {
+            content: '';
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            width: 10px;
+            height: 10px;
+            background: #4cc9f0;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        /* Block colors */
+        .block-color-0 { background: #a8d8ea; }
+        .block-color-1 { background: #aa96da; }
+        .block-color-2 { background: #fcbad3; }
+        .block-color-3 { background: #ffffd2; }
+        .block-color-4 { background: #a1de93; }
+        .block-color-5 { background: #f9c74f; }
+        .block-color-6 { background: #f8961e; }
+        .block-color-7 { background: #f94144; color: white; }
+        .block-color-8 { background: #577590; color: white; }
+        .block-color-9 { background: #6d6875; color: white; }
+
+        /* ===== DROP ZONES ===== */
+        .drop-zone {
+            min-height: 44px;
+            min-width: 68px;
+            border: 2px dashed transparent;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .drop-zone.drag-over {
+            border-color: #4cc9f0;
+            background: rgba(76, 201, 240, 0.1);
+        }
+        .new-stack-drop {
+            width: 68px;
+            min-height: 160px;
+            border: 2px dashed #cdd5de;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #adb5bd;
+            font-size: 0.8em;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .new-stack-drop.drag-over {
+            border-color: #4cc9f0;
+            background: rgba(76, 201, 240, 0.1);
+            color: #4cc9f0;
+        }
+
+        /* ===== BLOCK PALETTE ===== */
+        .palette {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 12px;
+            background: #f8fafb;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+        .palette-block {
+            width: 48px;
+            height: 32px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85em;
+            cursor: pointer;
+            border: 2px solid rgba(0,0,0,0.1);
+            transition: all 0.15s;
+        }
+        .palette-block:hover { transform: scale(1.1); }
+        .palette-block.used {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* ===== INPUT CONTROLS ===== */
+        .input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+        .input-row label { font-weight: 500; min-width: 80px; }
+        input[type="text"], input[type="number"] {
+            padding: 8px 12px;
+            border: 1px solid #cdd5de;
+            border-radius: 6px;
+            font-size: 0.95em;
+            font-family: inherit;
+            direction: rtl;
+        }
+        input:focus { outline: none; border-color: #4cc9f0; box-shadow: 0 0 0 3px rgba(76,201,240,0.2); }
+
+        /* Text input for manual entry */
+        .text-input-area {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cdd5de;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            direction: ltr;
+            text-align: left;
+            min-height: 60px;
+            resize: vertical;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: #4361ee; color: white; }
+        .btn-primary:hover:not(:disabled) { background: #3a56d4; }
+        .btn-success { background: #06d6a0; color: white; }
+        .btn-success:hover:not(:disabled) { background: #05c090; }
+        .btn-danger { background: #ef476f; color: white; }
+        .btn-danger:hover:not(:disabled) { background: #d63d62; }
+        .btn-secondary { background: #adb5bd; color: white; }
+        .btn-secondary:hover:not(:disabled) { background: #95a0a9; }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #4361ee;
+            color: #4361ee;
+        }
+        .btn-outline:hover:not(:disabled) { background: #4361ee; color: white; }
+        .btn-sm { padding: 6px 14px; font-size: 0.85em; }
+        .btn-lg { padding: 14px 28px; font-size: 1.1em; }
+
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        /* ===== ALERTS ===== */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 12px 0;
+            font-size: 0.9em;
+            display: none;
+        }
+        .alert.show { display: block; }
+        .alert-error { background: #fff0f3; border: 1px solid #ef476f; color: #c9184a; }
+        .alert-success { background: #ecfdf5; border: 1px solid #06d6a0; color: #047857; }
+        .alert-info { background: #eff6ff; border: 1px solid #4361ee; color: #1e40af; }
+
+        /* ===== SOLUTION DISPLAY ===== */
+        .solution-steps {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+        .step-item:hover { background: #f0f4f8; }
+        .step-item.active { background: #e0f2fe; border: 1px solid #4cc9f0; }
+        .step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #4361ee;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8em;
+            flex-shrink: 0;
+        }
+        .step-desc { flex: 1; font-size: 0.9em; }
+        .step-cost { color: #6c757d; font-size: 0.85em; }
+
+        /* ===== STEP NAVIGATOR ===== */
+        .step-navigator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: #f8fafb;
+            border-radius: 8px;
+            justify-content: center;
+        }
+        .step-info {
+            text-align: center;
+            min-width: 120px;
+        }
+        .step-info .current-step { font-size: 1.2em; font-weight: 700; }
+        .step-info .step-detail { font-size: 0.85em; color: #6c757d; margin-top: 4px; }
+
+        /* ===== BOARD DISPLAY ===== */
+        .board-display {
+            display: flex;
+            gap: 16px;
+            align-items: flex-end;
+            padding: 16px;
+            min-height: 160px;
+            background: #f8fafb;
+            border-radius: 8px;
+            flex-wrap: wrap;
+            direction: ltr;
+        }
+        .board-stack {
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+        }
+        .board-block {
+            width: 56px;
+            height: 34px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9em;
+            margin-bottom: 2px;
+            border: 2px solid rgba(0,0,0,0.12);
+        }
+        .board-block.highlight {
+            border: 3px solid #4cc9f0;
+            box-shadow: 0 0 8px rgba(76,201,240,0.5);
+        }
+        .board-base {
+            width: 60px;
+            height: 3px;
+            background: #6c757d;
+            border-radius: 2px;
+        }
+
+        /* ===== SEARCH LOG ===== */
+        .search-log-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+        }
+        .search-log-table th {
+            background: #e8edf3;
+            padding: 8px 10px;
+            text-align: right;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .search-log-table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+        .search-log-table tr:hover { background: #f0f4f8; }
+        .search-log-table tr.expanded { background: #e0f2fe; }
+        .log-state {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            direction: ltr;
+            text-align: left;
+        }
+        .children-row {
+            display: none;
+        }
+        .children-row.show { display: table-row; }
+        .children-detail {
+            padding: 8px 16px;
+            background: #f8fafb;
+            border-radius: 6px;
+            font-size: 0.85em;
+        }
+        .child-entry {
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin: 2px 0;
+        }
+        .child-added { background: #ecfdf5; }
+        .child-improved { background: #fef9c3; }
+        .child-rejected { background: #fff0f3; }
+
+        /* ===== IDA* LOG ===== */
+        .ida-iteration {
+            border: 1px solid #dde3eb;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .ida-header {
+            background: #e8edf3;
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+        .ida-body {
+            padding: 12px 16px;
+            display: none;
+        }
+        .ida-body.show { display: block; }
+
+        /* ===== METRICS ===== */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+        }
+        .metric-card {
+            background: #f8fafb;
+            border-radius: 8px;
+            padding: 14px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 1.6em;
+            font-weight: 700;
+            color: #4361ee;
+        }
+        .metric-label {
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
+        /* ===== SELECT ===== */
+        select {
+            padding: 8px 12px;
+            border: 1px solid #cdd5de;
+            border-radius: 6px;
+            font-size: 0.95em;
+            font-family: inherit;
+            background: white;
+            direction: rtl;
+            cursor: pointer;
+        }
+        select:focus { outline: none; border-color: #4cc9f0; }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f0f4f8; }
+        ::-webkit-scrollbar-thumb { background: #adb5bd; border-radius: 3px; }
+
+        /* ===== MISC ===== */
+        .mt-1 { margin-top: 8px; }
+        .mt-2 { margin-top: 16px; }
+        .mb-1 { margin-bottom: 8px; }
+        .mb-2 { margin-bottom: 16px; }
+        .text-center { text-align: center; }
+        .text-muted { color: #6c757d; }
+        .full-width { width: 100%; }
+        .hidden { display: none !important; }
+        .separator { height: 1px; background: #e8edf3; margin: 16px 0; }
+
+        /* Mode toggle */
+        .mode-toggle {
+            display: flex;
+            border: 1px solid #cdd5de;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .mode-toggle button {
+            flex: 1;
+            padding: 8px 16px;
+            border: none;
+            background: white;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85em;
+            transition: all 0.2s;
+        }
+        .mode-toggle button.active {
+            background: #4361ee;
+            color: white;
+        }
+
+        /* animation for play mode */
+        @keyframes moveBlock {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0); }
+        }
+        .animating { animation: moveBlock 0.4s ease; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+
+        /* Tooltip for blocks */
+        .block-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a2e;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .block:hover .block-tooltip { opacity: 1; }
+
+        /* Delete block btn */
+        .delete-block-btn {
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ef476f;
+            color: white;
+            border: 2px solid white;
+            font-size: 0.6em;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .block:hover .delete-block-btn { display: flex; }
+
+        /* Loading spinner */
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e8edf3;
+            border-top-color: #4361ee;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* stack label */
+        .stack-label {
+            font-size: 0.7em;
+            color: #adb5bd;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+    <div>
+        <h1>🧊 תכנון בעולם הקוביות</h1>
+        <div class="subtitle">חיפוש מידע — מציאת מסלול מינימלי</div>
+    </div>
+</header>
+
+<!-- ===== TABS ===== -->
+<div class="tabs">
+    <button class="tab-btn active" data-tab="setup">⚙️ הגדרה</button>
+    <button class="tab-btn" data-tab="solution">📋 פתרון</button>
+    <button class="tab-btn" data-tab="search-log">🔍 יומן חיפוש</button>
+    <button class="tab-btn" data-tab="metrics">📊 מדדים</button>
+</div>
+
+<!-- =====================================================
+     TAB 1: SETUP
+     ===================================================== -->
+<div id="tab-setup" class="tab-content active">
+    <div class="container">
+        <!-- Block Name Input -->
+        <div class="card mb-2">
+            <div class="card-header">
+                הגדרת קוביות
+            </div>
+            <div class="card-body">
+                <div class="input-row">
+                    <label>שמות קוביות:</label>
+                    <input type="text" id="block-names-input" placeholder="הזן שמות מופרדים בפסיקים, למשל: א,ב,ג,ד" style="flex:1">
+                    <button class="btn btn-primary btn-sm" onclick="applyBlockNames()">החל</button>
+                </div>
+                <div style="font-size: 0.8em; color: #6c757d;">
+                    עד 10 קוביות. שמות ייחודיים מופרדים בפסיקים. לדוגמא: א,ב,ג,ד או A,B,C,D
+                </div>
+            </div>
+        </div>
+
+        <!-- Start & Goal editors side by side -->
+        <div class="grid-2 mb-2">
+            <!-- START STATE -->
+            <div class="card">
+                <div class="card-header">
+                    <span>🟢 מצב התחלה</span>
+                    <button class="btn btn-sm btn-secondary" onclick="clearState('start')">נקה</button>
+                </div>
+                <div class="card-body state-editor" id="start-editor">
+                    <!-- Mode toggle -->
+                    <div class="mode-toggle">
+                        <button class="active" onclick="setMode('start','visual',this)">גרפי</button>
+                        <button onclick="setMode('start','text',this)">טקסט</button>
+                    </div>
+
+                    <!-- Visual mode -->
+                    <div id="start-visual-mode">
+                        <div class="palette" id="start-palette"></div>
+                        <div class="stacks-container" id="start-stacks"
+                             ondragover="handleDragOver(event)"
+                             ondrop="handleDropOnTable(event, 'start')">
+                            <div class="new-stack-drop"
+                                 ondragover="handleDragOver(event)"
+                                 ondrop="handleDropNewStack(event, 'start')">
+                                + ערימה<br>חדשה
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Text mode -->
+                    <div id="start-text-mode" class="hidden">
+                        <textarea class="text-input-area" id="start-text-input"
+                                  placeholder="הזן ערימות, אחת בכל שורה, מלמטה למעלה מופרדות בפסיקים.&#10;דוגמא:&#10;ד,א,ב,ג"></textarea>
+                        <button class="btn btn-sm btn-primary mt-1" onclick="applyTextState('start')">החל</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GOAL STATE -->
+            <div class="card">
+                <div class="card-header">
+                    <span>🎯 מצב יעד</span>
+                    <button class="btn btn-sm btn-secondary" onclick="clearState('goal')">נקה</button>
+                </div>
+                <div class="card-body state-editor" id="goal-editor">
+                    <div class="mode-toggle">
+                        <button class="active" onclick="setMode('goal','visual',this)">גרפי</button>
+                        <button onclick="setMode('goal','text',this)">טקסט</button>
+                    </div>
+
+                    <div id="goal-visual-mode">
+                        <div class="palette" id="goal-palette"></div>
+                        <div class="stacks-container" id="goal-stacks"
+                             ondragover="handleDragOver(event)"
+                             ondrop="handleDropOnTable(event, 'goal')">
+                            <div class="new-stack-drop"
+                                 ondragover="handleDragOver(event)"
+                                 ondrop="handleDropNewStack(event, 'goal')">
+                                + ערימה<br>חדשה
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="goal-text-mode" class="hidden">
+                        <textarea class="text-input-area" id="goal-text-input"
+                                  placeholder="הזן ערימות, אחת בכל שורה, מלמטה למעלה מופרדות בפסיקים.&#10;דוגמא:&#10;ד&#10;א,ב,ג"></textarea>
+                        <button class="btn btn-sm btn-primary mt-1" onclick="applyTextState('goal')">החל</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Algorithm selection & Run -->
+        <div class="card mb-2">
+            <div class="card-header">הפעלת חיפוש</div>
+            <div class="card-body">
+                <div class="grid-3" style="align-items:end;">
+                    <div>
+                        <label style="font-weight:600; display:block; margin-bottom:6px;">אלגוריתם:</label>
+                        <select id="algorithm-select" class="full-width">
+                            <option value="">-- לא נבחר אלגוריתם --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-weight:600; display:block; margin-bottom:6px;">היוריסטיקה:</label>
+                        <select id="heuristic-select" class="full-width">
+                            <option value="">-- לא נבחרה היוריסטיקה --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button class="btn btn-success btn-lg full-width" id="run-btn" onclick="runSearch()">
+                            ▶ הפעל חיפוש
+                        </button>
+                    </div>
+                </div>
+                <div id="validation-alert" class="alert alert-error"></div>
+                <div id="success-alert" class="alert alert-success"></div>
+            </div>
+        </div>
+
+        <!-- Load example -->
+        <div class="card">
+            <div class="card-header">דוגמאות מובנות</div>
+            <div class="card-body">
+                <div class="btn-group">
+                    <button class="btn btn-outline btn-sm" onclick="loadExample('simple')">
+                        דוגמא פשוטה (3 קוביות)
+                    </button>
+                    <button class="btn btn-outline btn-sm" onclick="loadExample('medium')">
+                        דוגמא בינונית (4 קוביות)
+                    </button>
+                    <button class="btn btn-outline btn-sm" onclick="loadExample('complex')">
+                        דוגמא מורכבת (5 קוביות)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     TAB 2: SOLUTION
+     ===================================================== -->
+<div id="tab-solution" class="tab-content">
+    <div class="container">
+        <div id="no-solution-msg" class="text-center" style="padding: 60px;">
+            <div style="font-size: 3em; margin-bottom: 16px;">🔍</div>
+            <div style="font-size: 1.2em; color: #6c757d;">טרם הופעל חיפוש. הגדר מצבי התחלה ויעד והפעל.</div>
+        </div>
+
+        <div id="solution-content" class="hidden">
+            <!-- Solution summary -->
+            <div class="card mb-2">
+                <div class="card-header">
+                    <span>פתרון</span>
+                    <span id="solution-cost-badge" style="background:#06d6a0;color:white;padding:4px 12px;border-radius:12px;font-size:0.9em;"></span>
+                </div>
+                <div class="card-body">
+                    <div class="grid-2">
+                        <!-- Steps list -->
+                        <div>
+                            <h3 style="margin-bottom:8px;">רצף פעולות</h3>
+                            <div class="solution-steps" id="solution-steps-list"></div>
+                        </div>
+                        <!-- Current board state -->
+                        <div>
+                            <h3 style="margin-bottom:8px;">מצב הלוח</h3>
+                            <div class="board-display" id="solution-board"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step navigator -->
+            <div class="card mb-2">
+                <div class="card-header">צעידה בפתרון</div>
+                <div class="card-body">
+                    <div class="step-navigator">
+                        <button class="btn btn-primary" id="btn-first" onclick="goToStep(0)">⏮ ראשון</button>
+                        <button class="btn btn-primary" id="btn-prev" onclick="prevStep()">→ הקודם</button>
+                        <div class="step-info">
+                            <div class="current-step" id="step-counter">שלב 0 מתוך 0</div>
+                            <div class="step-detail" id="step-detail-text"></div>
+                        </div>
+                        <button class="btn btn-primary" id="btn-next" onclick="nextStep()">הבא ←</button>
+                        <button class="btn btn-primary" id="btn-last" onclick="goToStep(-1)">אחרון ⏭</button>
+                        <div class="separator" style="height:40px;width:1px;margin:0 8px;"></div>
+                        <button class="btn btn-success" id="btn-play" onclick="togglePlay()">▶ הפעל</button>
+                    </div>
+                    <div class="mt-2 text-center" id="step-move-desc" style="font-size:1.1em; font-weight:600;"></div>
+                    <div class="text-center text-muted mt-1" id="step-cost-display"></div>
+                </div>
+            </div>
+
+            <!-- Source & Dest in step -->
+            <div class="grid-2 mb-2">
+                <div class="card">
+                    <div class="card-header">מצב מקור (לפני הפעולה)</div>
+                    <div class="card-body">
+                        <div class="board-display" id="step-source-board"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">מצב יעד (אחרי הפעולה)</div>
+                    <div class="card-body">
+                        <div class="board-display" id="step-dest-board"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     TAB 3: SEARCH LOG
+     ===================================================== -->
+<div id="tab-search-log" class="tab-content">
+    <div class="container">
+        <div id="no-log-msg" class="text-center" style="padding: 60px;">
+            <div style="font-size: 3em; margin-bottom: 16px;">📋</div>
+            <div style="font-size: 1.2em; color: #6c757d;">טרם הופעל חיפוש.</div>
+        </div>
+
+        <!-- A* log -->
+        <div id="astar-log-section" class="hidden">
+            <div class="card mb-2">
+                <div class="card-header">
+                    <span>יומן החיפוש — A*</span>
+                    <span class="text-muted" id="astar-log-count"></span>
+                </div>
+                <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                    <table class="search-log-table" id="astar-log-table">
+                        <thead>
+                            <tr>
+                                <th>ממתינים</th>
+                                <th>מצב</th>
+                                <th>g</th>
+                                <th>h</th>
+                                <th>f</th>
+                                <th>פעולה</th>
+                                <th>פרטים</th>
+                            </tr>
+                        </thead>
+                        <tbody id="astar-log-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- IDA* log -->
+        <div id="ida-log-section" class="hidden">
+            <div class="card mb-2">
+                <div class="card-header">יומן החיפוש — IDA*</div>
+                <div class="card-body">
+                    <div id="ida-iterations-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     TAB 4: METRICS
+     ===================================================== -->
+<div id="tab-metrics" class="tab-content">
+    <div class="container">
+        <div id="no-metrics-msg" class="text-center" style="padding: 60px;">
+            <div style="font-size: 3em; margin-bottom: 16px;">📊</div>
+            <div style="font-size: 1.2em; color: #6c757d;">טרם הופעל חיפוש.</div>
+        </div>
+
+        <div id="metrics-content" class="hidden">
+            <div class="card">
+                <div class="card-header">מדדי ביצוע</div>
+                <div class="card-body">
+                    <div class="metrics-grid" id="metrics-grid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+// ============================================================================
+// GLOBALS
+// ============================================================================
+let blockNames = [];
+let blockColorMap = {};
+const BLOCK_COLORS = [
+    'block-color-0', 'block-color-1', 'block-color-2', 'block-color-3',
+    'block-color-4', 'block-color-5', 'block-color-6', 'block-color-7',
+    'block-color-8', 'block-color-9'
+];
+
+// State data: each is an array of arrays (stacks, each bottom→top)
+let states = { start: [], goal: [] };
+
+// Search result data
+let searchResult = null;
+let currentStep = 0;
+let playInterval = null;
+
+// Drag state
+let dragData = null;
+
+// ============================================================================
+// TAB SWITCHING
+// ============================================================================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+});
+
+// ============================================================================
+// BLOCK NAMES & COLORS
+// ============================================================================
+function applyBlockNames() {
+    const input = document.getElementById('block-names-input').value.trim();
+    if (!input) return;
+
+    const names = input.split(',').map(s => s.trim()).filter(s => s.length > 0);
+
+    // Validate
+    if (names.length === 0) {
+        showAlert('validation-alert', 'יש להזין לפחות שם קובייה אחד');
+        return;
+    }
+    if (names.length > 10) {
+        showAlert('validation-alert', 'מקסימום 10 קוביות');
+        return;
+    }
+    const uniqueSet = new Set(names);
+    if (uniqueSet.size !== names.length) {
+        showAlert('validation-alert', 'שמות הקוביות חייבים להיות ייחודיים');
+        return;
+    }
+
+    hideAlert('validation-alert');
+    blockNames = names;
+    blockColorMap = {};
+    names.forEach((name, i) => {
+        blockColorMap[name] = BLOCK_COLORS[i % BLOCK_COLORS.length];
+    });
+
+    // Clear states
+    states.start = [];
+    states.goal = [];
+    renderState('start');
+    renderState('goal');
+    renderPalette('start');
+    renderPalette('goal');
+}
+
+// ============================================================================
+// PALETTE
+// ============================================================================
+function renderPalette(which) {
+    const container = document.getElementById(which + '-palette');
+    container.innerHTML = '';
+
+    const usedBlocks = new Set(states[which].flat());
+
+    blockNames.forEach(name => {
+        const el = document.createElement('div');
+        el.className = 'palette-block ' + (blockColorMap[name] || 'block-color-0');
+        if (usedBlocks.has(name)) el.classList.add('used');
+        el.textContent = name;
+        el.draggable = !usedBlocks.has(name);
+
+        el.addEventListener('dragstart', (e) => {
+            if (usedBlocks.has(name)) { e.preventDefault(); return; }
+            dragData = { source: 'palette', which, block: name };
+            e.dataTransfer.setData('text/plain', name);
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        // Click to add to new stack
+        el.addEventListener('click', () => {
+            if (usedBlocks.has(name)) return;
+            states[which].push([name]);
+            renderState(which);
+            renderPalette(which);
+        });
+
+        container.appendChild(el);
+    });
+}
+
+// ============================================================================
+// STATE RENDERING (VISUAL)
+// ============================================================================
+function renderState(which) {
+    const container = document.getElementById(which + '-stacks');
+    container.innerHTML = '';
+
+    states[which].forEach((stack, stackIdx) => {
+        const col = document.createElement('div');
+        col.className = 'stack-column';
+        col.dataset.stackIdx = stackIdx;
+
+        // Drop zone on top of stack
+        const dropTop = document.createElement('div');
+        dropTop.className = 'drop-zone';
+        dropTop.addEventListener('dragover', handleDragOver);
+        dropTop.addEventListener('dragleave', handleDragLeave);
+        dropTop.addEventListener('drop', (e) => handleDropOnStack(e, which, stackIdx));
+        col.appendChild(dropTop);
+
+        // Render blocks bottom to top
+        stack.forEach((blockName, blockIdx) => {
+            const isTop = blockIdx === stack.length - 1;
+            const el = document.createElement('div');
+            el.className = 'block ' + (blockColorMap[blockName] || 'block-color-0');
+            if (isTop) el.classList.add('top-block');
+            el.textContent = blockName;
+            el.draggable = isTop;
+
+            // Delete button
+            const delBtn = document.createElement('div');
+            delBtn.className = 'delete-block-btn';
+            delBtn.textContent = '×';
+            delBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (isTop) {
+                    states[which][stackIdx].pop();
+                    if (states[which][stackIdx].length === 0) {
+                        states[which].splice(stackIdx, 1);
+                    }
+                    renderState(which);
+                    renderPalette(which);
+                }
+            });
+            el.appendChild(delBtn);
+
+            if (isTop) {
+                el.addEventListener('dragstart', (e) => {
+                    dragData = { source: 'stack', which, stackIdx, block: blockName };
+                    e.dataTransfer.setData('text/plain', blockName);
+                    e.dataTransfer.effectAllowed = 'move';
+                    el.classList.add('dragging');
+                });
+                el.addEventListener('dragend', () => {
+                    el.classList.remove('dragging');
+                    dragData = null;
+                });
+            }
+
+            col.appendChild(el);
+        });
+
+        // Stack base
+        const base = document.createElement('div');
+        base.className = 'stack-base';
+        col.appendChild(base);
+
+        // Stack label
+        const label = document.createElement('div');
+        label.className = 'stack-label';
+        label.textContent = 'ערימה ' + (stackIdx + 1);
+        col.appendChild(label);
+
+        container.appendChild(col);
+    });
+
+    // New stack drop zone (always at the end)
+    const newDrop = document.createElement('div');
+    newDrop.className = 'new-stack-drop';
+    newDrop.innerHTML = '+ ערימה<br>חדשה';
+    newDrop.addEventListener('dragover', handleDragOver);
+    newDrop.addEventListener('dragleave', handleDragLeave);
+    newDrop.addEventListener('drop', (e) => handleDropNewStack(e, which));
+    container.appendChild(newDrop);
+}
+
+// ============================================================================
+// DRAG & DROP HANDLERS
+// ============================================================================
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    e.currentTarget.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+}
+
+function handleDropOnStack(e, which, targetStackIdx) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.remove('drag-over');
+    if (!dragData) return;
+
+    const blockName = dragData.block;
+
+    if (dragData.source === 'palette') {
+        // Add from palette to existing stack
+        states[which][targetStackIdx].push(blockName);
+    } else if (dragData.source === 'stack' && dragData.which === which) {
+        if (dragData.stackIdx === targetStackIdx) return; // same stack
+        // Move top block from one stack to another
+        states[which][dragData.stackIdx].pop();
+        if (states[which][dragData.stackIdx].length === 0) {
+            states[which].splice(dragData.stackIdx, 1);
+        }
+        // Recalculate target index if source was removed and was before target
+        let adjustedTarget = targetStackIdx;
+        if (states[which][dragData.stackIdx] === undefined && dragData.stackIdx < targetStackIdx) {
+            adjustedTarget = targetStackIdx - 1;
+        }
+        if (adjustedTarget < states[which].length) {
+            states[which][adjustedTarget].push(blockName);
+        }
+    }
+
+    dragData = null;
+    renderState(which);
+    renderPalette(which);
+}
+
+function handleDropNewStack(e, which) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.remove('drag-over');
+    if (!dragData) return;
+
+    const blockName = dragData.block;
+
+    if (dragData.source === 'palette') {
+        states[which].push([blockName]);
+    } else if (dragData.source === 'stack' && dragData.which === which) {
+        states[which][dragData.stackIdx].pop();
+        if (states[which][dragData.stackIdx].length === 0) {
+            states[which].splice(dragData.stackIdx, 1);
+        }
+        states[which].push([blockName]);
+    }
+
+    dragData = null;
+    renderState(which);
+    renderPalette(which);
+}
+
+function handleDropOnTable(e, which) {
+    // Dropped on the stacks container background — treat as new stack
+    if (e.target.classList.contains('stacks-container')) {
+        handleDropNewStack(e, which);
+    }
+}
+
+// ============================================================================
+// TEXT MODE
+// ============================================================================
+function setMode(which, mode, btn) {
+    const toggle = btn.parentElement;
+    toggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    document.getElementById(which + '-visual-mode').classList.toggle('hidden', mode !== 'visual');
+    document.getElementById(which + '-text-mode').classList.toggle('hidden', mode !== 'text');
+
+    if (mode === 'text') {
+        // Populate text area from current state
+        const textArea = document.getElementById(which + '-text-input');
+        textArea.value = states[which].map(s => s.join(',')).join('\n');
+    }
+}
+
+function applyTextState(which) {
+    const text = document.getElementById(which + '-text-input').value.trim();
+    if (!text) {
+        states[which] = [];
+        renderState(which);
+        renderPalette(which);
+        return;
+    }
+
+    const stacks = text.split('\n').map(line =>
+        line.split(',').map(s => s.trim()).filter(s => s.length > 0)
+    ).filter(s => s.length > 0);
+
+    // Update block names if needed
+    const allBlocks = stacks.flat();
+    const newBlocks = allBlocks.filter(b => !blockNames.includes(b));
+    if (newBlocks.length > 0) {
+        newBlocks.forEach(b => {
+            if (blockNames.length < 10) {
+                blockNames.push(b);
+                blockColorMap[b] = BLOCK_COLORS[blockNames.length - 1];
+            }
+        });
+        document.getElementById('block-names-input').value = blockNames.join(',');
+    }
+
+    states[which] = stacks;
+    renderState(which);
+    renderPalette(which);
+}
+
+// ============================================================================
+// CLEAR STATE
+// ============================================================================
+function clearState(which) {
+    states[which] = [];
+    renderState(which);
+    renderPalette(which);
+}
+
+// ============================================================================
+// EXAMPLES
+// ============================================================================
+function loadExample(type) {
+    hideAlert('validation-alert');
+
+    if (type === 'simple') {
+        blockNames = ['א', 'ב', 'ג'];
+        states.start = [['א', 'ב', 'ג']];
+        states.goal = [['ג', 'ב', 'א']];
+    } else if (type === 'medium') {
+        blockNames = ['א', 'ב', 'ג', 'ד'];
+        states.start = [['ד', 'א', 'ב', 'ג']];
+        states.goal = [['ד'], ['א', 'ב', 'ג']];
+    } else if (type === 'complex') {
+        blockNames = ['א', 'ב', 'ג', 'ד', 'ה'];
+        states.start = [['א', 'ב', 'ג', 'ד', 'ה']];
+        states.goal = [['ה', 'ד', 'ג', 'ב', 'א']];
+    }
+
+    blockColorMap = {};
+    blockNames.forEach((name, i) => {
+        blockColorMap[name] = BLOCK_COLORS[i % BLOCK_COLORS.length];
+    });
+    document.getElementById('block-names-input').value = blockNames.join(',');
+
+    renderState('start');
+    renderState('goal');
+    renderPalette('start');
+    renderPalette('goal');
+}
+
+// ============================================================================
+// ALERTS
+// ============================================================================
+function showAlert(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.add('show');
+}
+function hideAlert(id) {
+    document.getElementById(id).classList.remove('show');
+}
+
+// ============================================================================
+// RUN SEARCH
+// ============================================================================
+async function runSearch() {
+    hideAlert('validation-alert');
+    hideAlert('success-alert');
+
+    const algo = document.getElementById('algorithm-select').value;
+    const heur = document.getElementById('heuristic-select').value;
+
+    if (!algo) {
+        showAlert('validation-alert', 'יש לבחור אלגוריתם');
+        return;
+    }
+    if (!heur) {
+        showAlert('validation-alert', 'יש לבחור היוריסטיקה');
+        return;
+    }
+
+    // Validate states client-side first
+    if (states.start.length === 0 && states.goal.length === 0) {
+        showAlert('validation-alert', 'יש להגדיר מצבי התחלה ויעד');
+        return;
+    }
+
+    const runBtn = document.getElementById('run-btn');
+    runBtn.disabled = true;
+    runBtn.innerHTML = '<span class="spinner"></span> מחפש...';
+
+    try {
+        const resp = await fetch('/api/solve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                start: states.start,
+                goal: states.goal,
+                algorithm: algo,
+                heuristic: heur,
+            }),
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok || !data.success) {
+            showAlert('validation-alert', data.error || data.error_message || 'שגיאה בחיפוש');
+            return;
+        }
+
+        searchResult = data;
+        showAlert('success-alert', `נמצא פתרון! עלות: ${data.cost}, זמן: ${data.metrics.runtime_seconds} שניות`);
+
+        renderSolution();
+        renderSearchLog();
+        renderMetrics();
+
+        // Switch to solution tab
+        document.querySelector('[data-tab="solution"]').click();
+
+    } catch (err) {
+        showAlert('validation-alert', 'שגיאת תקשורת: ' + err.message);
+    } finally {
+        runBtn.disabled = false;
+        runBtn.innerHTML = '▶ הפעל חיפוש';
+    }
+}
+
+// ============================================================================
+// SOLUTION RENDERING
+// ============================================================================
+function renderSolution() {
+    if (!searchResult || !searchResult.success) return;
+
+    document.getElementById('no-solution-msg').classList.add('hidden');
+    document.getElementById('solution-content').classList.remove('hidden');
+
+    document.getElementById('solution-cost-badge').textContent = 'עלות: ' + searchResult.cost;
+
+    // Steps list
+    const list = document.getElementById('solution-steps-list');
+    list.innerHTML = '';
+
+    searchResult.path.forEach((step, i) => {
+        const item = document.createElement('div');
+        item.className = 'step-item';
+        item.dataset.step = i;
+        item.onclick = () => goToStep(i);
+
+        const num = document.createElement('div');
+        num.className = 'step-number';
+        num.textContent = i;
+
+        const desc = document.createElement('div');
+        desc.className = 'step-desc';
+        desc.textContent = step.move ? step.move.description : 'מצב התחלה';
+
+        const cost = document.createElement('div');
+        cost.className = 'step-cost';
+        cost.textContent = 'עלות: ' + step.cumulative_cost;
+
+        item.appendChild(num);
+        item.appendChild(desc);
+        item.appendChild(cost);
+        list.appendChild(item);
+    });
+
+    currentStep = 0;
+    updateStepDisplay();
+}
+
+function updateStepDisplay() {
+    if (!searchResult) return;
+
+    const path = searchResult.path;
+    const total = path.length - 1;
+
+    // Highlight active step in list
+    document.querySelectorAll('.step-item').forEach(el => {
+        el.classList.toggle('active', parseInt(el.dataset.step) === currentStep);
+    });
+
+    // Counter
+    document.getElementById('step-counter').textContent =
+        `שלב ${currentStep} מתוך ${total}`;
+
+    // Move description
+    const step = path[currentStep];
+    document.getElementById('step-move-desc').textContent =
+        step.move ? step.move.description : (currentStep === 0 ? 'מצב התחלה' : '');
+
+    // Cost
+    document.getElementById('step-cost-display').textContent =
+        `עלות מצטברת: ${step.cumulative_cost}`;
+
+    // Detail
+    document.getElementById('step-detail-text').textContent =
+        step.move ?
+        `${step.move.block} הועברה מ${step.move.source_desc} ל${step.move.dest_desc}` :
+        'מצב ההתחלה';
+
+    // Board
+    renderBoard('solution-board', step.state, step.move ? step.move.block : null);
+
+    // Source & dest boards
+    if (currentStep > 0) {
+        renderBoard('step-source-board', path[currentStep - 1].state, null);
+        renderBoard('step-dest-board', path[currentStep].state, step.move ? step.move.block : null);
+    } else {
+        renderBoard('step-source-board', step.state, null);
+        renderBoard('step-dest-board', step.state, null);
+    }
+
+    // Button states
+    document.getElementById('btn-prev').disabled = currentStep <= 0;
+    document.getElementById('btn-first').disabled = currentStep <= 0;
+    document.getElementById('btn-next').disabled = currentStep >= total;
+    document.getElementById('btn-last').disabled = currentStep >= total;
+}
+
+function goToStep(n) {
+    if (!searchResult) return;
+    if (n === -1) n = searchResult.path.length - 1;
+    currentStep = Math.max(0, Math.min(n, searchResult.path.length - 1));
+    updateStepDisplay();
+}
+
+function prevStep() { goToStep(currentStep - 1); }
+function nextStep() { goToStep(currentStep + 1); }
+
+function togglePlay() {
+    const btn = document.getElementById('btn-play');
+    if (playInterval) {
+        clearInterval(playInterval);
+        playInterval = null;
+        btn.textContent = '▶ הפעל';
+        btn.classList.remove('btn-danger');
+        btn.classList.add('btn-success');
+    } else {
+        if (currentStep >= searchResult.path.length - 1) {
+            currentStep = 0;
+            updateStepDisplay();
+        }
+        btn.textContent = '⏸ עצור';
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-danger');
+        playInterval = setInterval(() => {
+            if (currentStep >= searchResult.path.length - 1) {
+                togglePlay();
+                return;
+            }
+            nextStep();
+        }, 800);
+    }
+}
+
+// ============================================================================
+// BOARD RENDERING (for solution display)
+// ============================================================================
+function renderBoard(containerId, stateData, highlightBlock) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+
+    if (!stateData || stateData.length === 0) {
+        container.innerHTML = '<div class="text-muted">שולחן ריק</div>';
+        return;
+    }
+
+    stateData.forEach(stack => {
+        const col = document.createElement('div');
+        col.className = 'board-stack';
+
+        stack.forEach(blockName => {
+            const el = document.createElement('div');
+            el.className = 'board-block ' + (blockColorMap[blockName] || 'block-color-0');
+            if (blockName === highlightBlock) el.classList.add('highlight');
+            el.textContent = blockName;
+            col.appendChild(el);
+        });
+
+        const base = document.createElement('div');
+        base.className = 'board-base';
+        col.appendChild(base);
+
+        container.appendChild(col);
+    });
+}
+
+// ============================================================================
+// SEARCH LOG RENDERING
+// ============================================================================
+function renderSearchLog() {
+    if (!searchResult) return;
+
+    document.getElementById('no-log-msg').classList.add('hidden');
+
+    // A* log
+    if (searchResult.search_log && searchResult.search_log.length > 0) {
+        document.getElementById('astar-log-section').classList.remove('hidden');
+        document.getElementById('ida-log-section').classList.add('hidden');
+
+        document.getElementById('astar-log-count').textContent =
+            `${searchResult.search_log.length} פיתוחים`;
+
+        const tbody = document.getElementById('astar-log-body');
+        tbody.innerHTML = '';
+
+        searchResult.search_log.forEach((entry, idx) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${entry.queue_size}</td>
+                <td class="log-state">${formatState(entry.state)}</td>
+                <td>${entry.g}</td>
+                <td>${entry.h}</td>
+                <td>${entry.f}</td>
+                <td>${entry.action || 'התחלה'}</td>
+                <td>${entry.children_info ?
+                    `<button class="btn btn-sm btn-outline" onclick="toggleChildren(${idx})">
+                        יורשים (${entry.children_info.length})
+                    </button>` : '-'}
+                </td>
+            `;
+            tbody.appendChild(tr);
+
+            // Children detail row
+            if (entry.children_info) {
+                const childTr = document.createElement('tr');
+                childTr.className = 'children-row';
+                childTr.id = `children-${idx}`;
+                const td = document.createElement('td');
+                td.colSpan = 7;
+
+                let childHtml = '<div class="children-detail">';
+                entry.children_info.forEach(child => {
+                    const statusClass = child.status === 'added' ? 'child-added' :
+                                        child.status === 'improved' ? 'child-improved' : 'child-rejected';
+                    const statusText = child.status === 'added' ? 'נוסף' :
+                                       child.status === 'improved' ? 'שופר' : 'נדחה';
+                    childHtml += `<div class="child-entry ${statusClass}">
+                        <strong>${statusText}</strong> — ${formatState(child.state)} |
+                        g=${child.g}, h=${child.h}, f=${child.f}
+                    </div>`;
+                });
+                childHtml += '</div>';
+                td.innerHTML = childHtml;
+                childTr.appendChild(td);
+                tbody.appendChild(childTr);
+            }
+        });
+    }
+
+    // IDA* log
+    if (searchResult.ida_logs && searchResult.ida_logs.length > 0) {
+        document.getElementById('ida-log-section').classList.remove('hidden');
+        document.getElementById('astar-log-section').classList.add('hidden');
+
+        const container = document.getElementById('ida-iterations-container');
+        container.innerHTML = '';
+
+        searchResult.ida_logs.forEach(iter => {
+            const div = document.createElement('div');
+            div.className = 'ida-iteration';
+
+            div.innerHTML = `
+                <div class="ida-header" onclick="this.nextElementSibling.classList.toggle('show')">
+                    <span>איטרציה ${iter.iteration} | סף: ${iter.threshold}</span>
+                    <span>פיתוחים: ${iter.expansions} | גיזומים: ${iter.prunings} | סף הבא: ${iter.next_threshold}</span>
+                </div>
+                <div class="ida-body">
+                    ${iter.sample_expansions.length > 0 ? `
+                        <h4>דוגמאות לפיתוח:</h4>
+                        ${iter.sample_expansions.map(s =>
+                            `<div class="child-entry child-added">${formatState(s.state)} | g=${s.g}, h=${s.h}, f=${s.f}</div>`
+                        ).join('')}
+                    ` : ''}
+                    ${iter.sample_prunings.length > 0 ? `
+                        <h4>דוגמאות לגיזום:</h4>
+                        ${iter.sample_prunings.map(s =>
+                            `<div class="child-entry child-rejected">${formatState(s.state)} | f=${s.f} > סף ${iter.threshold}</div>`
+                        ).join('')}
+                    ` : ''}
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+}
+
+function toggleChildren(idx) {
+    const row = document.getElementById(`children-${idx}`);
+    if (row) row.classList.toggle('show');
+}
+
+function formatState(stateData) {
+    if (!stateData || stateData.length === 0) return '(ריק)';
+    return stateData.map(s => s.join('-')).join(' | ');
+}
+
+// ============================================================================
+// METRICS RENDERING
+// ============================================================================
+function renderMetrics() {
+    if (!searchResult || !searchResult.metrics) return;
+
+    document.getElementById('no-metrics-msg').classList.add('hidden');
+    document.getElementById('metrics-content').classList.remove('hidden');
+
+    const m = searchResult.metrics;
+    const grid = document.getElementById('metrics-grid');
+    grid.innerHTML = '';
+
+    const metrics = [
+        { label: 'עלות הפתרון', value: searchResult.cost },
+        { label: 'זמן ריצה (שניות)', value: m.runtime_seconds },
+        { label: 'מצבים שנוצרו', value: m.states_generated },
+        { label: 'מצבים שפותחו', value: m.states_expanded },
+        { label: 'גודל תור מקסימלי', value: m.max_queue_size },
+        { label: 'שיפורי עלות מסלול', value: m.path_improvements },
+    ];
+
+    if (m.ida_iterations > 0) {
+        metrics.push({ label: 'איטרציות IDA*', value: m.ida_iterations });
+    }
+
+    metrics.forEach(({ label, value }) => {
+        const card = document.createElement('div');
+        card.className = 'metric-card';
+        card.innerHTML = `
+            <div class="metric-value">${value}</div>
+            <div class="metric-label">${label}</div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+// ============================================================================
+// LOAD OPTIONS FROM SERVER
+// ============================================================================
+async function loadOptions() {
+    try {
+        const resp = await fetch('/api/options');
+        const data = await resp.json();
+
+        const algoSelect = document.getElementById('algorithm-select');
+        data.algorithms.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            algoSelect.appendChild(opt);
+        });
+
+        const heurSelect = document.getElementById('heuristic-select');
+        data.heuristics.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            heurSelect.appendChild(opt);
+        });
+    } catch (err) {
+        console.error('Failed to load options:', err);
+    }
+}
+
+// ============================================================================
+// INIT
+// ============================================================================
+loadOptions();
+</script>
+
+</body>
+</html>
