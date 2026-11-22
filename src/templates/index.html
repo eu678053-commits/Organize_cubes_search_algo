@@ -1520,18 +1520,37 @@ function renderBoard(containerId, stateData, highlightBlock) {
 function renderSearchLog() {
     if (!searchResult) return;
 
-    document.getElementById('no-log-msg').classList.add('hidden');
+    // 1. איפוס והסתרת התצוגה מהחיפוש הקודם
+    const noLogMsg = document.getElementById('no-log-msg');
+    const astarSection = document.getElementById('astar-log-section');
+    const idaSection = document.getElementById('ida-log-section');
+
+    astarSection.classList.add('hidden');
+    idaSection.classList.add('hidden');
+    document.getElementById('astar-log-body').innerHTML = '';
+    document.getElementById('ida-iterations-container').innerHTML = '';
+
+    const hasAstarLog = searchResult.search_log && searchResult.search_log.length > 0;
+    const hasIdaLog = searchResult.ida_logs && searchResult.ida_logs.length > 0;
+
+    // 2. אם היומן ריק (למשל כשמצב ההתחלה זהה למצב היעד)
+    if (!hasAstarLog && !hasIdaLog) {
+        noLogMsg.classList.remove('hidden');
+        noLogMsg.querySelector('div:last-child').textContent =
+            'מצב ההתחלה זהה למצב היעד — לא בוצעו פיתוחים בחיפוש.';
+        return;
+    }
+
+    noLogMsg.classList.add('hidden');
 
     // A* log
-    if (searchResult.search_log && searchResult.search_log.length > 0) {
-        document.getElementById('astar-log-section').classList.remove('hidden');
-        document.getElementById('ida-log-section').classList.add('hidden');
+    if (hasAstarLog) {
+        astarSection.classList.remove('hidden');
 
         document.getElementById('astar-log-count').textContent =
             `${searchResult.search_log.length} פיתוחים`;
 
         const tbody = document.getElementById('astar-log-body');
-        tbody.innerHTML = '';
 
         searchResult.search_log.forEach((entry, idx) => {
             const tr = document.createElement('tr');
@@ -1578,12 +1597,10 @@ function renderSearchLog() {
     }
 
     // IDA* log
-    if (searchResult.ida_logs && searchResult.ida_logs.length > 0) {
-        document.getElementById('ida-log-section').classList.remove('hidden');
-        document.getElementById('astar-log-section').classList.add('hidden');
+    if (hasIdaLog) {
+        idaSection.classList.remove('hidden');
 
         const container = document.getElementById('ida-iterations-container');
-        container.innerHTML = '';
 
         searchResult.ida_logs.forEach(iter => {
             const div = document.createElement('div');
